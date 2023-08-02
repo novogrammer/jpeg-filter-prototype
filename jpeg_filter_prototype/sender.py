@@ -5,7 +5,6 @@ YOUR_IP = "127.0.0.1"
 YOUR_PORT = 5005
 
 
-# ソケットを作成
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
   sock.connect((YOUR_IP, YOUR_PORT))
 
