@@ -30,15 +30,17 @@ while True:
     size = struct.unpack('!I', data)[0]
 
     data = b''
+    isClosing = False
     while len(data) < size:
       packet = conn.recv(size - len(data))
       if not packet:
-        print("Client disconnected.")
-        conn.close()
+        isClosing = True
         break
       data += packet
-    if not packet:
-      continue
+    if isClosing:
+      print("Client disconnected.")
+      conn.close()
+      break
     print("Received.")
     with open(filename, 'wb') as f:
       f.write(data)
