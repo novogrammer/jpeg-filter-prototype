@@ -1,22 +1,28 @@
 import socket
 import struct
-# import cv2
-# import numpy
+import os
+from dotenv import load_dotenv
 
-MY_IP = "127.0.0.1"
-MY_PORT = 5005
+load_dotenv()
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.bind((MY_IP, MY_PORT))
 
-sock.listen(1)
+YOUR_IP=os.getenv("FILTER_YOUR_IP","127.0.0.1")
+YOUR_PORT=int(os.getenv("FILTER_YOUR_PORT","5000"))
+print(f"YOUR_IP: {YOUR_IP}")
+print(f"YOUR_PORT: {YOUR_PORT}")
+
+
+sock_for_receive = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock_for_receive.bind((YOUR_IP, YOUR_PORT))
+
+sock_for_receive.listen(1)
 
 print("Waiting for connection...")
 
 file_count = 0
 
 while True:
-  conn, addr = sock.accept()
+  conn, addr = sock_for_receive.accept()
   print(f"Connected by {addr}")
 
   while True:
@@ -45,8 +51,4 @@ while True:
     with open(filename, 'wb') as f:
       f.write(data)
     
-    # img_buf=numpy.frombuffer(data,dtype=numpy.uint8)
-    # img=cv2.imdecode(img_buf,cv2.IMREAD_COLOR)
-    # cv2.imshow("imdecode",img)
-    # cv2.waitKey(0)
   print("Waiting for next connection...")

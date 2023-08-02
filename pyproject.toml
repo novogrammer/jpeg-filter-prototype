@@ -10,6 +10,7 @@ packages = [{include = "jpeg_filter_prototype"}]
 python = "^3.10"
 opencv-python = "^4.8.0.74"
 numpy = "^1.25.2"
+python-dotenv = "^1.0.0"
 
 
 [build-system]
