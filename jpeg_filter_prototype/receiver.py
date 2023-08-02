@@ -1,11 +1,11 @@
 import socket
+import struct
 import cv2
 import numpy
 
 MY_IP = "127.0.0.1"
 MY_PORT = 5005
 
-# ソケットを作成
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.bind((MY_IP, MY_PORT))
 
@@ -18,11 +18,21 @@ while True:
   print(f"Connected by {addr}")
 
   while True:
-    data = conn.recv(65535) # バッファサイズは適切に調整してください
+    data = conn.recv(4)
     if not data:
       print("Client disconnected.")
       conn.close()
       break
+    size = struct.unpack('!I', data)[0]
+
+    data = b''
+    while len(data) < size:
+      packet = conn.recv(size - len(data))
+      if not packet:
+        print("Client disconnected.")
+        conn.close()
+        break
+      data += packet
     print("Received.")
 
     img_buf=numpy.frombuffer(data,dtype=numpy.uint8)
