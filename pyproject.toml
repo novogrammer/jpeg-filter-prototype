@@ -8,6 +8,8 @@ packages = [{include = "jpeg_filter_prototype"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
+opencv-python = "^4.8.0.74"
+numpy = "^1.25.2"
 
 
 [build-system]
