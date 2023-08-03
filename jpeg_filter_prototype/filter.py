@@ -3,8 +3,8 @@ import os
 from dotenv import load_dotenv
 
 from image_transfer import receive_image, send_image
-# import cv2
-# import numpy
+import cv2
+import numpy
 
 load_dotenv()
 
@@ -17,6 +17,9 @@ YOUR_IP=os.getenv("FILTER_YOUR_IP","127.0.0.1")
 YOUR_PORT=int(os.getenv("FILTER_YOUR_PORT","5000"))
 print(f"YOUR_IP: {YOUR_IP}")
 print(f"YOUR_PORT: {YOUR_PORT}")
+
+JPEG_QUALITY=int(os.getenv("FILTER_JPEG_QUALITY","80"))
+print(f"JPEG_QUALITY: {JPEG_QUALITY}")
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_for_send:
   sock_for_send.connect((YOUR_IP, YOUR_PORT))
@@ -36,17 +39,23 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_for_send:
 
     while True:
 
-      data=receive_image(conn_for_receive)
-      if data is None:
+      received_data=receive_image(conn_for_receive)
+      if received_data is None:
         print("Client disconnected.")
         conn_for_receive.close()
         break
       print("Received.")
-      send_image(sock_for_send,data)
-      print("Sent.")
-      
-      # img_buf=numpy.frombuffer(data,dtype=numpy.uint8)
-      # img=cv2.imdecode(img_buf,cv2.IMREAD_COLOR)
+      img_buf=numpy.frombuffer(received_data,dtype=numpy.uint8)
+      img=cv2.imdecode(img_buf,cv2.IMREAD_COLOR)
       # cv2.imshow("imdecode",img)
       # cv2.waitKey(0)
+      print("Filtered.")
+      ret,encoded = cv2.imencode(".jpg", img, (cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY))
+      if ret:
+        print("Encoded.")
+        sending_data=encoded.tobytes()
+
+        send_image(sock_for_send,sending_data)
+        print("Sent.")
+      
     print("Waiting for next connection...")

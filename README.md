@@ -15,11 +15,12 @@ poetry install
 ```
 # filter.pyで待ち受けるアドレス
 FILTER_MY_IP="127.0.0.1"
-FILTER_MY_PORT="5000"
+FILTER_MY_PORT="5005"
 # filter.pyからの送信先アドレス
 FILTER_YOUR_IP="127.0.0.1"
-FILTER_YOUR_PORT="5001"
-
+FILTER_YOUR_PORT="5006"
+# filter.pyで使うJPEGの品質
+FILTER_JPEG_QUALITY="80"
 ```
 
 ## 実行
