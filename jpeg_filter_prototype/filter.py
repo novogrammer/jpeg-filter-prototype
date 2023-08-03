@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from image_transfer import receive_image, send_image
 import cv2
 import numpy as np
+import PySimpleGUI as sg
 import time
 
 load_dotenv()
@@ -21,6 +22,31 @@ print(f"YOUR_PORT: {YOUR_PORT}")
 
 JPEG_QUALITY=int(os.getenv("FILTER_JPEG_QUALITY","80"))
 print(f"JPEG_QUALITY: {JPEG_QUALITY}")
+
+sg.theme('LightBlue')
+
+sg.popup_ok('popup_ok') 
+
+# layout = [
+#   [
+#     sg.Text('Realtime movie', size=(40, 1), justification='center', font='Helvetica 20',key='-status-'),
+#   ],
+#   [
+#     sg.Text('Camera number: ', size=(8, 1)), sg.InputText(default_text='0',  size=(4, 1),key='-camera_num-'),
+#   ],
+#   [
+#     sg.Image(filename='', key='image'),
+#   ],
+#   [
+#     sg.Button('Start', size=(10, 1), font='Helvetica 14',key ='-start-'),
+#     sg.Button('Stop', size=(10, 1), font='Helvetica 14',key = '-stop-'),
+#     sg.Button('Exit', size=(10, 1), font='Helvetica 14', key='-exit-'),
+#   ],
+# ]
+
+
+# window = sg.Window('Realtime movie',layout, location=(100, 100))
+
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_for_send:
   sock_for_send.connect((YOUR_IP, YOUR_PORT))
