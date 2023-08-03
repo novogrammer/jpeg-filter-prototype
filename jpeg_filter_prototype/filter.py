@@ -46,12 +46,14 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_for_send:
         break
       print("Received.")
       img_buf=numpy.frombuffer(received_data,dtype=numpy.uint8)
-      img=cv2.imdecode(img_buf,cv2.IMREAD_COLOR)
-      img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+      img_before=cv2.imdecode(img_buf,cv2.IMREAD_COLOR)
+      img_gray = cv2.cvtColor(img_before, cv2.COLOR_BGR2GRAY)
+      img_after = cv2.Canny(img_gray, 100, 200)
+
       # cv2.imshow("imdecode",img)
       # cv2.waitKey(0)
       print("Filtered.")
-      ret,encoded = cv2.imencode(".jpg", img, (cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY))
+      ret,encoded = cv2.imencode(".jpg", img_after, (cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY))
       if not ret:
         print("Encode failed!!!")
         continue
