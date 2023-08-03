@@ -1,2 +1,3 @@
 received_image_*.jpg
 .env
+__pycache__

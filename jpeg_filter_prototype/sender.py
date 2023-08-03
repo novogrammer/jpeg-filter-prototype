@@ -1,8 +1,9 @@
 import socket
-import struct
 import os
 
 from dotenv import load_dotenv
+
+from image_transfer import send_image
 
 load_dotenv()
 
@@ -18,8 +19,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_for_send:
 
   with open('sending_image.jpg', 'rb') as f:
     data = f.read()
-  size = len(data)
-  sock_for_send.send(struct.pack('!I', size))
-  sock_for_send.sendall(data)
+  send_image(sock_for_send,data)
 
 print("Sent.")

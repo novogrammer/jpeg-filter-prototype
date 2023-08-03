@@ -1,7 +1,8 @@
 import socket
-import struct
 import os
 from dotenv import load_dotenv
+
+from image_transfer import receive_image, send_image
 # import cv2
 # import numpy
 
@@ -31,34 +32,20 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_for_send:
   file_count = 0
 
   while True:
-    conn, addr = sock_for_receive.accept()
+    conn_for_receive, addr = sock_for_receive.accept()
     print(f"Connected by {addr}")
 
     while True:
       file_count += 1
       filename = f'received_image_{file_count}.jpg'
-      data = conn.recv(4)
-      if not data:
-        print("Client disconnected.")
-        conn.close()
-        break
-      size = struct.unpack('!I', data)[0]
 
-      data = b''
-      isClosing = False
-      while len(data) < size:
-        packet = conn.recv(size - len(data))
-        if not packet:
-          isClosing = True
-          break
-        data += packet
-      if isClosing:
+      data=receive_image(conn_for_receive)
+      if data is None:
         print("Client disconnected.")
-        conn.close()
+        conn_for_receive.close()
         break
       print("Received.")
-      sock_for_send.send(struct.pack('!I', size))
-      sock_for_send.sendall(data)
+      send_image(sock_for_send,data)
       print("Sent.")
       
       # img_buf=numpy.frombuffer(data,dtype=numpy.uint8)

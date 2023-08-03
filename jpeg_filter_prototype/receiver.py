@@ -1,7 +1,8 @@
 import socket
-import struct
 import os
 from dotenv import load_dotenv
+
+from image_transfer import receive_image
 
 load_dotenv()
 
@@ -22,30 +23,17 @@ print("Waiting for connection...")
 file_count = 0
 
 while True:
-  conn, addr = sock_for_receive.accept()
+  conn_for_receive, addr = sock_for_receive.accept()
   print(f"Connected by {addr}")
 
   while True:
     file_count += 1
     filename = f'received_image_{file_count}.jpg'
-    data = conn.recv(4)
-    if not data:
-      print("Client disconnected.")
-      conn.close()
-      break
-    size = struct.unpack('!I', data)[0]
 
-    data = b''
-    isClosing = False
-    while len(data) < size:
-      packet = conn.recv(size - len(data))
-      if not packet:
-        isClosing = True
-        break
-      data += packet
-    if isClosing:
+    data=receive_image(conn_for_receive)
+    if data is None:
       print("Client disconnected.")
-      conn.close()
+      conn_for_receive.close()
       break
     print("Received.")
     with open(filename, 'wb') as f:
