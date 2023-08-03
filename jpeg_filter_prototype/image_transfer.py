@@ -1,11 +1,12 @@
 import struct
+import socket
 
-def send_image(sock,data):
+def send_image(sock:socket.socket,data:bytes)->None:
     size = len(data)
     sock.send(struct.pack('!I', size))
     sock.sendall(data)
 
-def receive_image(conn):
+def receive_image(conn:socket.socket)->bytes:
   data = conn.recv(4)
   if not data:
     return None
