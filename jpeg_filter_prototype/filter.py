@@ -51,11 +51,14 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_for_send:
       # cv2.waitKey(0)
       print("Filtered.")
       ret,encoded = cv2.imencode(".jpg", img, (cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY))
-      if ret:
-        print("Encoded.")
-        sending_data=encoded.tobytes()
+      if not ret:
+        print("Encode failed!!!")
+        continue
 
-        send_image(sock_for_send,sending_data)
-        print("Sent.")
+      print("Encoded.")
+      sending_data=encoded.tobytes()
+
+      send_image(sock_for_send,sending_data)
+      print("Sent.")
       
     print("Waiting for next connection...")
