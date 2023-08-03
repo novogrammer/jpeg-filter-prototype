@@ -29,15 +29,12 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_for_send:
 
   print("Waiting for connection...")
 
-  file_count = 0
 
   while True:
     conn_for_receive, addr = sock_for_receive.accept()
     print(f"Connected by {addr}")
 
     while True:
-      file_count += 1
-      filename = f'received_image_{file_count}.jpg'
 
       data=receive_image(conn_for_receive)
       if data is None:
