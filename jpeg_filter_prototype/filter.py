@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 from image_transfer import receive_image, send_image
 import cv2
-import numpy
+import numpy as np
 import time
 
 load_dotenv()
@@ -47,7 +47,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_for_send:
         break
       print("Received.")
       time_begin=time.perf_counter()
-      img_buf=numpy.frombuffer(received_data,dtype=numpy.uint8)
+      img_buf=np.frombuffer(received_data,dtype=np.uint8)
       img_before=cv2.imdecode(img_buf,cv2.IMREAD_COLOR)
       img_gray = cv2.cvtColor(img_before, cv2.COLOR_BGR2GRAY)
       img_after = cv2.Canny(img_gray, 100, 200)
