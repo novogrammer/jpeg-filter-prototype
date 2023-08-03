@@ -1,5 +1,8 @@
+from queue import Empty, Queue
 import socket
 import os
+import threading
+from typing import Literal, TypedDict
 from dotenv import load_dotenv
 
 from image_transfer import receive_image, send_image
@@ -23,75 +26,109 @@ print(f"YOUR_PORT: {YOUR_PORT}")
 JPEG_QUALITY=int(os.getenv("FILTER_JPEG_QUALITY","80"))
 print(f"JPEG_QUALITY: {JPEG_QUALITY}")
 
-sg.theme('LightBlue')
 
-sg.popup_ok('popup_ok') 
-
-# layout = [
-#   [
-#     sg.Text('Realtime movie', size=(40, 1), justification='center', font='Helvetica 20',key='-status-'),
-#   ],
-#   [
-#     sg.Text('Camera number: ', size=(8, 1)), sg.InputText(default_text='0',  size=(4, 1),key='-camera_num-'),
-#   ],
-#   [
-#     sg.Image(filename='', key='image'),
-#   ],
-#   [
-#     sg.Button('Start', size=(10, 1), font='Helvetica 14',key ='-start-'),
-#     sg.Button('Stop', size=(10, 1), font='Helvetica 14',key = '-stop-'),
-#     sg.Button('Exit', size=(10, 1), font='Helvetica 14', key='-exit-'),
-#   ],
-# ]
+class ImageMessage(TypedDict):
+  name: Literal["before", "after"]
+  png_image: bytes
 
 
-# window = sg.Window('Realtime movie',layout, location=(100, 100))
+def socket_thread(image_queue:"Queue[ImageMessage]"):
+  with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_for_send:
+    sock_for_send.connect((YOUR_IP, YOUR_PORT))
 
 
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_for_send:
-  sock_for_send.connect((YOUR_IP, YOUR_PORT))
+    sock_for_receive = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock_for_receive.bind((MY_IP, MY_PORT))
 
+    sock_for_receive.listen(1)
 
-  sock_for_receive = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-  sock_for_receive.bind((MY_IP, MY_PORT))
+    print("Waiting for connection...")
 
-  sock_for_receive.listen(1)
-
-  print("Waiting for connection...")
-
-
-  while True:
-    conn_for_receive, addr = sock_for_receive.accept()
-    print(f"Connected by {addr}")
 
     while True:
+      conn_for_receive, addr = sock_for_receive.accept()
+      print(f"Connected by {addr}")
 
-      received_data=receive_image(conn_for_receive)
-      if received_data is None:
-        print("Client disconnected.")
-        conn_for_receive.close()
+      while True:
+
+        received_data=receive_image(conn_for_receive)
+        if received_data is None:
+          print("Client disconnected.")
+          conn_for_receive.close()
+          break
+        print("Received.")
+        time_begin=time.perf_counter()
+        img_buf=np.frombuffer(received_data,dtype=np.uint8)
+        img_before=cv2.imdecode(img_buf,cv2.IMREAD_COLOR)
+        png_before=cv2.imencode('.png', img_before)[1].tobytes() 
+        img_gray = cv2.cvtColor(img_before, cv2.COLOR_BGR2GRAY)
+        img_after = cv2.Canny(img_gray, 100, 200)
+        png_after=cv2.imencode('.png', img_after)[1].tobytes() 
+
+        # cv2.imshow("imdecode",img)
+        # cv2.waitKey(0)
+        print("Filtered.")
+        ret,encoded = cv2.imencode(".jpg", img_after, (cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY))
+        if not ret:
+          print("Encode failed!!!")
+          continue
+        time_end=time.perf_counter()
+
+        print("Encoded.")
+        print(f"process time: {time_end-time_begin}")
+        sending_data=encoded.tobytes()
+
+        image_queue.put(
+          ImageMessage(name="before",png_image=png_before)
+        )
+        image_queue.put(
+          ImageMessage(name="after",png_image=png_after)
+        )
+
+        send_image(sock_for_send,sending_data)
+        print("Sent.")
+        
+      print("Waiting for next connection...")
+
+image_queue:"Queue[ImageMessage]"=Queue()
+
+socket_thread = threading.Thread(target=socket_thread, args=(image_queue,))
+# メインスレッドの終了と同時に強制終了
+socket_thread.daemon = True
+socket_thread.start()
+
+
+sg.theme('LightBlue')
+
+
+layout = [
+  [
+    sg.Text('Before Image', size=(40, 1), justification='center', font='Helvetica 20',key='before_image_text'),
+    sg.Text('After Image', size=(40, 1), justification='center', font='Helvetica 20',key='after_image_text'),
+  ],
+  [
+    sg.Image(filename='', key='before_image'),
+    sg.Image(filename='', key='after_image'),
+  ],
+]
+
+
+window = sg.Window('Filter',layout, location=(100, 100))
+while True:
+    event,values=window.read(timeout=10)
+    if event == sg.WIN_CLOSED:
         break
-      print("Received.")
-      time_begin=time.perf_counter()
-      img_buf=np.frombuffer(received_data,dtype=np.uint8)
-      img_before=cv2.imdecode(img_buf,cv2.IMREAD_COLOR)
-      img_gray = cv2.cvtColor(img_before, cv2.COLOR_BGR2GRAY)
-      img_after = cv2.Canny(img_gray, 100, 200)
+    try:
+      image_message=image_queue.get(False)
+      if image_message["name"]=="before":
+        window["before_image"].update(data=image_message["png_image"])
+      if image_message["name"]=="after":
+        window["after_image"].update(data=image_message["png_image"])
+    except Empty:
+      pass
+    
 
-      # cv2.imshow("imdecode",img)
-      # cv2.waitKey(0)
-      print("Filtered.")
-      ret,encoded = cv2.imencode(".jpg", img_after, (cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY))
-      if not ret:
-        print("Encode failed!!!")
-        continue
-      time_end=time.perf_counter()
+#画面を閉じます。
+window.close()
 
-      print("Encoded.")
-      print(f"process time: {time_end-time_begin}")
-      sending_data=encoded.tobytes()
 
-      send_image(sock_for_send,sending_data)
-      print("Sent.")
-      
-    print("Waiting for next connection...")
