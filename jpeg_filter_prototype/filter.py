@@ -47,6 +47,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_for_send:
       print("Received.")
       img_buf=numpy.frombuffer(received_data,dtype=numpy.uint8)
       img=cv2.imdecode(img_buf,cv2.IMREAD_COLOR)
+      img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
       # cv2.imshow("imdecode",img)
       # cv2.waitKey(0)
       print("Filtered.")
