@@ -32,7 +32,7 @@ class ImageMessage(TypedDict):
   png_image: bytes
 
 
-def socket_thread(image_queue:"Queue[ImageMessage]"):
+def socket_thread(image_queue:Queue[ImageMessage]):
   with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_for_send:
     sock_for_send.connect((YOUR_IP, YOUR_PORT))
 
