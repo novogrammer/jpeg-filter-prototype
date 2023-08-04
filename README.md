@@ -21,6 +21,17 @@ FILTER_YOUR_IP="127.0.0.1"
 FILTER_YOUR_PORT="5006"
 # filter.pyで使うJPEGの品質
 FILTER_JPEG_QUALITY="80"
+
+# sender.pyでファイルから読み込むか？
+SENDER_FROM_FILE="1"
+# sender.pyの画像幅
+SENDER_IMAGE_WIDTH="480"
+# sender.pyのFPS
+SENDER_FPS="30"
+
+# receiver.pyでファイルへ書き込むか？
+RECEIVER_TO_FILE="1"
+
 ```
 
 ## 実行
