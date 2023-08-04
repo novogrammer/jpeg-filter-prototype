@@ -115,7 +115,7 @@ layout = [
 
 window = sg.Window('Filter',layout, location=(100, 100))
 while True:
-    event,values=window.read(timeout=10)
+    event,values=window.read(timeout=1)
     if event == sg.WIN_CLOSED:
         break
     try:
