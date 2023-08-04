@@ -130,7 +130,7 @@ def run(callback:Callable[[UMat],UMat]):
         pass
       
 
-  #画面を閉じます。
+  # 画面を閉じる
   window.close()
 
 

@@ -41,9 +41,12 @@ RECEIVER_TO_FILE="1"
 ```
 poetry run python ./jpeg_filter_prototype/receiver.py
 ```
+
+cannyの場合
 ```
-poetry run python ./jpeg_filter_prototype/filter.py
+poetry run python ./jpeg_filter_prototype/filter_canny.py
 ```
+
 ```
 poetry run python ./jpeg_filter_prototype/sender.py
 ```

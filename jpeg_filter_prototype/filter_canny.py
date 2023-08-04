@@ -2,7 +2,7 @@
 import cv2
 from cv2 import UMat
 
-from filter_common import run
+from runner import run
 
 
 def callback(img_before:UMat)->UMat:
