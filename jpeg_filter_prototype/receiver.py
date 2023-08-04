@@ -9,8 +9,11 @@ load_dotenv()
 
 YOUR_IP=os.getenv("FILTER_YOUR_IP","127.0.0.1")
 YOUR_PORT=int(os.getenv("FILTER_YOUR_PORT","5000"))
+TO_FILE=bool(int(os.getenv("RECEIVER_TO_FILE","1")))
+
 print(f"YOUR_IP: {YOUR_IP}")
 print(f"YOUR_PORT: {YOUR_PORT}")
+print(f"TO_FILE: {TO_FILE}")
 
 
 sock_for_receive = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -36,7 +39,8 @@ while True:
       conn_for_receive.close()
       break
     print("Received.")
-    with open(filename, 'wb') as f:
-      f.write(data)
+    if TO_FILE:
+      with open(filename, 'wb') as f:
+        f.write(data)
     
   print("Waiting for next connection...")
