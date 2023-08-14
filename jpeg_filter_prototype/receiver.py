@@ -14,11 +14,10 @@ TO_FILE=bool(int(os.getenv("RECEIVER_TO_FILE","1")))
 print(f"YOUR_IP: {YOUR_IP}")
 print(f"YOUR_PORT: {YOUR_PORT}")
 print(f"TO_FILE: {TO_FILE}")
-print(f"socket.gethostname(): {socket.gethostname()}")
 
 
 sock_for_receive = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock_for_receive.bind((socket.gethostname(), YOUR_PORT))
+sock_for_receive.bind(("0.0.0.0", YOUR_PORT))
 
 sock_for_receive.listen(1)
 
