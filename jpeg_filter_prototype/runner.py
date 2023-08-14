@@ -32,6 +32,7 @@ def run(callback:Callable[[UMat],UMat]):
   JPEG_QUALITY=int(os.getenv("FILTER_JPEG_QUALITY","80"))
   print(f"JPEG_QUALITY: {JPEG_QUALITY}")
 
+  print(f"socket.gethostname(): {socket.gethostname()}")
 
 
 
@@ -41,7 +42,7 @@ def run(callback:Callable[[UMat],UMat]):
 
 
       sock_for_receive = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-      sock_for_receive.bind((MY_IP, MY_PORT))
+      sock_for_receive.bind((socket.gethostname(), MY_PORT))
 
       sock_for_receive.listen(1)
 
