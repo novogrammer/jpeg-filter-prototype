@@ -9,12 +9,11 @@ from dotenv import load_dotenv
 from image_transfer import receive_image, send_image
 import cv2
 import numpy as np
-import PySimpleGUI as sg
 from my_timer import MyTimer
 
 class ImageMessage(TypedDict):
   name: Literal["before", "after"]
-  png_image: bytes
+  image: UMat
 
 def run(callback:Callable[[UMat],UMat]):
   load_dotenv()
@@ -84,10 +83,16 @@ def run(callback:Callable[[UMat],UMat]):
           sending_data=encoded.tobytes()
 
           image_queue.put(
-            ImageMessage(name="before",png_image=png_before)
+            ImageMessage(
+              name="before",
+              image=img_before,
+            )
           )
           image_queue.put(
-            ImageMessage(name="after",png_image=png_after)
+            ImageMessage(
+              name="after",
+              image=img_after,
+            )
           )
 
           send_image(sock_for_send,sending_data)
@@ -95,7 +100,7 @@ def run(callback:Callable[[UMat],UMat]):
           
         print("Waiting for next connection...")
 
-  image_queue:"Queue[ImageMessage]"=Queue()
+  image_queue:Queue[ImageMessage]=Queue()
 
   socket_thread = threading.Thread(target=socket_thread, args=(image_queue,))
   # メインスレッドの終了と同時に強制終了
@@ -103,37 +108,26 @@ def run(callback:Callable[[UMat],UMat]):
   socket_thread.start()
 
 
-  sg.theme('LightBlue')
+  window_name="filter"
+  cv2.namedWindow(window_name,cv2.WINDOW_NORMAL)
 
 
-  layout = [
-    [
-      sg.Text('Before Image', size=(40, 1), justification='center', font='Helvetica 20',key='before_image_text'),
-      sg.Text('After Image', size=(40, 1), justification='center', font='Helvetica 20',key='after_image_text'),
-    ],
-    [
-      sg.Image(filename='', key='before_image'),
-      sg.Image(filename='', key='after_image'),
-    ],
-  ]
-
-
-  window = sg.Window('Filter',layout, location=(100, 100))
   while True:
-      event,values=window.read(timeout=1)
-      if event == sg.WIN_CLOSED:
-          break
-      try:
-        image_message=image_queue.get(False)
-        if image_message["name"]=="before":
-          window["before_image"].update(data=image_message["png_image"])
-        if image_message["name"]=="after":
-          window["after_image"].update(data=image_message["png_image"])
-      except Empty:
-        pass
+    key = cv2.waitKey(1)
+    if key == 27:
+      break
+
+    try:
+      image_message=image_queue.get(False)
+      # if image_message["name"]=="before":
+      #   cv2.imshow(window_name,image_message["image"])
+      if image_message["name"]=="after":
+        cv2.imshow(window_name,image_message["image"])
+    except Empty:
+      pass
       
 
   # 画面を閉じる
-  window.close()
+  cv2.destroyAllWindows()
 
 

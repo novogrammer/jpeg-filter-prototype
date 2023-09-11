@@ -11,7 +11,6 @@ python = "^3.11"
 opencv-python = "^4.8.0.74"
 numpy = "^1.25.2"
 python-dotenv = "^1.0.0"
-pysimplegui = "^4.60.5"
 opencv-contrib-python = "^4.8.0.74"
 
 
