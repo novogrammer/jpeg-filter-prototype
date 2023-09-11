@@ -106,12 +106,19 @@ def run(callback:Callable[[UMat],UMat]):
 
   window_name="filter"
   cv2.namedWindow(window_name,cv2.WINDOW_NORMAL)
-
+  is_fullscreen=False
 
   while True:
     key = cv2.waitKey(1)
     if key == 27:
       break
+    if key==ord("f"):
+      if is_fullscreen:
+        cv2.setWindowProperty(window_name,cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_NORMAL)
+        is_fullscreen=False
+      else:
+        cv2.setWindowProperty(window_name,cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
+        is_fullscreen=True
 
     try:
       image_message=image_queue.get(False)
