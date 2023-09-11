@@ -63,12 +63,8 @@ def run(callback:Callable[[UMat],UMat]):
             img_buf=np.frombuffer(received_data,dtype=np.uint8)
             with MyTimer("decode img_before"):
               img_before=cv2.imdecode(img_buf,cv2.IMREAD_COLOR)
-            with MyTimer("encode png_before"):
-              png_before=cv2.imencode('.png', img_before)[1].tobytes() 
             with MyTimer("callback"):
               img_after=callback(img_before)
-            with MyTimer("encode png_after"):
-              png_after=cv2.imencode('.png', img_after)[1].tobytes() 
 
             # cv2.imshow("imdecode",img)
             # cv2.waitKey(0)
