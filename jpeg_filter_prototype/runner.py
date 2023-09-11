@@ -1,6 +1,7 @@
 from queue import Empty, Queue
 import socket
 import os
+import time
 import threading
 from typing import Callable, Literal, TypedDict
 from cv2 import UMat
@@ -34,67 +35,74 @@ def run(callback:Callable[[UMat],UMat]):
 
 
   def socket_thread(image_queue:Queue[ImageMessage]):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_for_send:
-      sock_for_send.connect((YOUR_IP, YOUR_PORT))
 
 
-      with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_for_receive:
-        sock_for_receive.bind(("0.0.0.0", MY_PORT))
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_for_receive:
+      sock_for_receive.bind(("0.0.0.0", MY_PORT))
 
-        sock_for_receive.listen(1)
+      sock_for_receive.listen(1)
 
-        print("Waiting for connection...")
+      print("Waiting for connection...")
 
+
+      while True:
+        conn_for_receive, addr = sock_for_receive.accept()
+        print(f"Connected by {addr}")
 
         while True:
-          conn_for_receive, addr = sock_for_receive.accept()
-          print(f"Connected by {addr}")
+          try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_for_send:
+              sock_for_send.connect((YOUR_IP, YOUR_PORT))
 
-          while True:
+              while True:
 
-            received_data=receive_image(conn_for_receive)
-            if received_data is None:
-              print("Client disconnected.")
-              conn_for_receive.close()
-              break
-            print("Received.")
-            with MyTimer("process"):
+                received_data=receive_image(conn_for_receive)
+                if received_data is None:
+                  print("Client disconnected.")
+                  conn_for_receive.close()
+                  break
+                print("Received.")
+                with MyTimer("process"):
 
-              img_buf=np.frombuffer(received_data,dtype=np.uint8)
-              with MyTimer("decode img_before"):
-                img_before=cv2.imdecode(img_buf,cv2.IMREAD_COLOR)
-              with MyTimer("callback"):
-                img_after=callback(img_before)
+                  img_buf=np.frombuffer(received_data,dtype=np.uint8)
+                  with MyTimer("decode img_before"):
+                    img_before=cv2.imdecode(img_buf,cv2.IMREAD_COLOR)
+                  with MyTimer("callback"):
+                    img_after=callback(img_before)
 
-              # cv2.imshow("imdecode",img)
-              # cv2.waitKey(0)
-              print("Filtered.")
-              with MyTimer("encode img_after"):
-                ret,encoded = cv2.imencode(".jpg", img_after, (cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY))
-              if not ret:
-                print("Encode failed!!!")
-                continue
+                  # cv2.imshow("imdecode",img)
+                  # cv2.waitKey(0)
+                  print("Filtered.")
+                  with MyTimer("encode img_after"):
+                    ret,encoded = cv2.imencode(".jpg", img_after, (cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY))
+                  if not ret:
+                    print("Encode failed!!!")
+                    continue
 
-              print("Encoded.")
-            sending_data=encoded.tobytes()
+                  print("Encoded.")
+                sending_data=encoded.tobytes()
 
-            image_queue.put(
-              ImageMessage(
-                name="before",
-                image=img_before,
-              )
-            )
-            image_queue.put(
-              ImageMessage(
-                name="after",
-                image=img_after,
-              )
-            )
+                image_queue.put(
+                  ImageMessage(
+                    name="before",
+                    image=img_before,
+                  )
+                )
+                image_queue.put(
+                  ImageMessage(
+                    name="after",
+                    image=img_after,
+                  )
+                )
 
-            send_image(sock_for_send,sending_data)
-            print("Sent.")
-            
-          print("Waiting for next connection...")
+                send_image(sock_for_send,sending_data)
+                print("Sent.")
+                
+              print("Waiting for next connection...")
+          except socket.error as e:
+            print(e)
+            print("retry connect")
+            time.sleep(1)
 
   image_queue:Queue[ImageMessage]=Queue()
 
