@@ -5,8 +5,8 @@ from cv2 import UMat
 from runner import run
 
 
-def filter_superpixel(img_before:UMat)->UMat:
-    height, width,channels = img_before.shape[:3]
+def filter_superpixel(image_before:UMat)->UMat:
+    height, width,channels = image_before.shape[:3]
 
     num_superpixels = 400
     num_levels = 4
@@ -28,14 +28,14 @@ def filter_superpixel(img_before:UMat)->UMat:
     )
 
     # スーパーピクセルセグメンテーションを適用
-    seeds.iterate(img_before, num_iterations)
+    seeds.iterate(image_before, num_iterations)
 
     # 結果を取得
     labels = seeds.getLabels()
     contour_mask = seeds.getLabelContourMask(False)
-    img_after:UMat=img_before.copy()
-    img_after[0<contour_mask]=(0,255,255)
+    image_after:UMat=image_before.copy()
+    image_after[0<contour_mask]=(0,255,255)
 
-    return img_after
+    return image_after
 
 run(filter_superpixel)
