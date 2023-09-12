@@ -1,4 +1,4 @@
-from queue import Empty, Queue
+from queue import Empty,Full, Queue
 import socket
 import os
 import time
@@ -12,9 +12,9 @@ import cv2
 import numpy as np
 from my_timer import MyTimer
 
-class ImageMessage(TypedDict):
-  name: Literal["before", "after"]
-  image: UMat
+# class ImageMessage(TypedDict):
+#   name: Literal["before", "after"]
+#   image: UMat
 
 def run(callback:Callable[[UMat],UMat]):
   load_dotenv()
@@ -34,82 +34,66 @@ def run(callback:Callable[[UMat],UMat]):
 
 
 
-  def socket_thread(image_queue:Queue[ImageMessage]):
-
-
+  def receiver(image_before_queue:Queue[UMat]):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_for_receive:
       sock_for_receive.bind(("0.0.0.0", MY_PORT))
-
       sock_for_receive.listen(1)
-
       print("Waiting for connection...")
-
-
       while True:
         conn_for_receive, addr = sock_for_receive.accept()
         print(f"Connected by {addr}")
-
         while True:
+          received_data=receive_image(conn_for_receive)
+          if received_data is None:
+            print("Client disconnected.")
+            conn_for_receive.close()
+            break
+          print("Received.")
+          image_buf=np.frombuffer(received_data,dtype=np.uint8)
+          with MyTimer("decode image_before"):
+            image_before=cv2.imdecode(image_buf,cv2.IMREAD_COLOR)
           try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_for_send:
-              sock_for_send.connect((YOUR_IP, YOUR_PORT))
+            image_before_queue.put(image_before)
+          except Full:
+            print("image_before_queue is Full")
 
-              while True:
+        print("Waiting for next connection...")
+  def sender(image_after_queue:Queue[UMat]):
+    while True:
+      try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_for_send:
+          sock_for_send.connect((YOUR_IP, YOUR_PORT))
+          while True:
+            try:
+              image_after=image_after_queue.get(False)
+              with MyTimer("encode image_after"):
+                ret,encoded = cv2.imencode(".jpg", image_after, (cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY))
+              if not ret:
+                print("Encode failed!!!")
+                continue
+              print("Encoded.")
+              sending_data=encoded.tobytes()
+              send_image(sock_for_send,sending_data)
+              print("Sent.")
+            except Empty:
+              pass
+      except socket.error as e:
+        print(e)
+        print("retry connect")
+        time.sleep(1)
 
-                received_data=receive_image(conn_for_receive)
-                if received_data is None:
-                  print("Client disconnected.")
-                  conn_for_receive.close()
-                  break
-                print("Received.")
-                with MyTimer("process"):
+  image_before_queue:Queue[UMat]=Queue(100)
+  image_after_queue:Queue[UMat]=Queue(100)
 
-                  img_buf=np.frombuffer(received_data,dtype=np.uint8)
-                  with MyTimer("decode img_before"):
-                    img_before=cv2.imdecode(img_buf,cv2.IMREAD_COLOR)
-                  with MyTimer("callback"):
-                    img_after=callback(img_before)
-
-                  # cv2.imshow("imdecode",img)
-                  # cv2.waitKey(0)
-                  print("Filtered.")
-                  with MyTimer("encode img_after"):
-                    ret,encoded = cv2.imencode(".jpg", img_after, (cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY))
-                  if not ret:
-                    print("Encode failed!!!")
-                    continue
-
-                  print("Encoded.")
-                sending_data=encoded.tobytes()
-
-                image_queue.put(
-                  ImageMessage(
-                    name="before",
-                    image=img_before,
-                  )
-                )
-                image_queue.put(
-                  ImageMessage(
-                    name="after",
-                    image=img_after,
-                  )
-                )
-
-                send_image(sock_for_send,sending_data)
-                print("Sent.")
-                
-              print("Waiting for next connection...")
-          except socket.error as e:
-            print(e)
-            print("retry connect")
-            time.sleep(1)
-
-  image_queue:Queue[ImageMessage]=Queue()
-
-  socket_thread = threading.Thread(target=socket_thread, args=(image_queue,))
+  receiver_thread = threading.Thread(target=receiver, args=(image_before_queue,))
   # メインスレッドの終了と同時に強制終了
-  socket_thread.daemon = True
-  socket_thread.start()
+  receiver_thread.daemon = True
+  receiver_thread.start()
+
+  sender_thread = threading.Thread(target=sender, args=(image_after_queue,))
+  # メインスレッドの終了と同時に強制終了
+  sender_thread.daemon = True
+  sender_thread.start()
 
 
   window_name="filter"
@@ -129,11 +113,15 @@ def run(callback:Callable[[UMat],UMat]):
         is_fullscreen=True
 
     try:
-      image_message=image_queue.get(False)
-      # if image_message["name"]=="before":
-      #   cv2.imshow(window_name,image_message["image"])
-      if image_message["name"]=="after":
-        cv2.imshow(window_name,image_message["image"])
+      image_before=image_before_queue.get(False)
+      with MyTimer("callback"):
+        image_after=callback(image_before)
+      print("Filtered.")
+      cv2.imshow(window_name,image_after)
+      try:
+        image_after_queue.put(image_after)
+      except Full:
+        print("image_after_queue is Full")
     except Empty:
       pass
       
