@@ -58,7 +58,21 @@ def run(callback:Callable[[UMat],UMat]):
             print("image_before_queue is Full")
 
         print("Waiting for next connection...")
-  def sender(image_after_queue:Queue[UMat]):
+  def converter(image_before_queue:Queue[UMat],image_after_queue:Queue[UMat]):
+    while True:
+      try:
+        image_before=image_before_queue.get(False)
+        with MyTimer("callback"):
+          image_after=callback(image_before)
+        print("Filtered.")
+        try:
+          image_after_queue.put(image_after)
+        except Full:
+          print("image_after_queue is Full")
+      except Empty:
+        pass
+
+  def sender(image_after_queue:Queue[UMat],image_showing_queue:Queue[UMat]):
     while True:
       try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_for_send:
@@ -66,6 +80,11 @@ def run(callback:Callable[[UMat],UMat]):
           while True:
             try:
               image_after=image_after_queue.get(False)
+              try:
+                image_showing_queue.put(image_after)
+              except Full:
+                print("image_showing_queue is Full")
+
               with MyTimer("encode image_after"):
                 ret,encoded = cv2.imencode(".jpg", image_after, (cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY))
               if not ret:
@@ -84,13 +103,19 @@ def run(callback:Callable[[UMat],UMat]):
 
   image_before_queue:Queue[UMat]=Queue(100)
   image_after_queue:Queue[UMat]=Queue(100)
+  image_showing_queue:Queue[UMat]=Queue(100)
 
   receiver_thread = threading.Thread(target=receiver, args=(image_before_queue,))
   # メインスレッドの終了と同時に強制終了
   receiver_thread.daemon = True
   receiver_thread.start()
 
-  sender_thread = threading.Thread(target=sender, args=(image_after_queue,))
+  converter_thread = threading.Thread(target=converter, args=(image_before_queue,image_after_queue,))
+  # メインスレッドの終了と同時に強制終了
+  converter_thread.daemon = True
+  converter_thread.start()
+
+  sender_thread = threading.Thread(target=sender, args=(image_after_queue,image_showing_queue,))
   # メインスレッドの終了と同時に強制終了
   sender_thread.daemon = True
   sender_thread.start()
@@ -111,17 +136,10 @@ def run(callback:Callable[[UMat],UMat]):
       else:
         cv2.setWindowProperty(window_name,cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
         is_fullscreen=True
-
     try:
-      image_before=image_before_queue.get(False)
-      with MyTimer("callback"):
-        image_after=callback(image_before)
-      print("Filtered.")
-      cv2.imshow(window_name,image_after)
-      try:
-        image_after_queue.put(image_after)
-      except Full:
-        print("image_after_queue is Full")
+      image_showing=image_showing_queue.get(False)
+      with MyTimer("imshow"):
+        cv2.imshow(window_name,image_showing)
     except Empty:
       pass
       
