@@ -9,23 +9,27 @@ from runner import run
 import numpy as np
 from my_timer import MyTimer
 
-IMAGE_WIDTH=int(os.getenv("SENDER_IMAGE_WIDTH","480"))
-IMAGE_HEIGHT=int(os.getenv("SENDER_IMAGE_HEIGHT","270"))
-
 class FilterCanny2:
-  def __init__(self,width:int,height:int) -> None:
-    self.image_white = np.zeros((height,width,3),np.uint8)
+  def __init__(self) -> None:
+    self.image_white = None
+    self.image_white_transformed = None
+    self.image_black_transformed = None
+    self.image_before_transformed = None
+    self.image_temp = None
+  def prepare_images(self, image_base:UMat) -> None:
+    height,width,c = image_base.shape
+    self.image_white = np.zeros((height,width,c),np.uint8)
     self.image_white += 255
     self.image_white_transformed = self.image_white.copy()
     self.image_black_transformed = self.image_white.copy()
     self.image_before_transformed = self.image_white.copy()
     self.image_temp = self.image_white.copy()
-  def __call__(self, image_before:UMat) -> UMat:
-    t=time.perf_counter()
-    height,width,c = image_before.shape
 
-    print(self.image_black_transformed.shape)
-    print(image_before.shape)
+  def __call__(self, image_before:UMat) -> UMat:
+    height,width,c = image_before.shape
+    t=time.perf_counter()
+    if self.image_white is None or self.image_white.shape != image_before.shape:
+      self.prepare_images(image_before)
     
     with MyTimer("transform"):
       transform=cv2.getRotationMatrix2D((width / 2, height / 2), 45*t, 0.5)
@@ -41,5 +45,5 @@ class FilterCanny2:
       image_after=cv2.bitwise_or(self.image_temp,self.image_before_transformed)
     return image_after
 
-filterCanny2=FilterCanny2(IMAGE_WIDTH,IMAGE_HEIGHT)
+filterCanny2=FilterCanny2()
 run(filterCanny2)
