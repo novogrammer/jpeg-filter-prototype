@@ -26,6 +26,8 @@ FILTER_JPEG_QUALITY="80"
 SENDER_FROM_FILE="1"
 # sender.pyの画像幅
 SENDER_IMAGE_WIDTH="480"
+# sender.pyの画像高さ
+SENDER_IMAGE_HEIGHT="270"
 # sender.pyのFPS
 SENDER_FPS="30"
 
