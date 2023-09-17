@@ -61,7 +61,7 @@ def run(callback:Callable[[UMat],UMat]):
   def converter(image_before_queue:Queue[UMat],image_after_queue:Queue[UMat]):
     while True:
       try:
-        image_before=image_before_queue.get(False)
+        image_before=image_before_queue.get(False,0.1)
         with MyTimer("callback"):
           image_after=callback(image_before)
         print("Filtered.")
@@ -79,7 +79,7 @@ def run(callback:Callable[[UMat],UMat]):
           sock_for_send.connect((YOUR_IP, YOUR_PORT))
           while True:
             try:
-              image_after=image_after_queue.get(False)
+              image_after=image_after_queue.get(False,0.1)
               try:
                 image_showing_queue.put(image_after)
               except Full:
