@@ -8,7 +8,7 @@ import numpy as np
 from my_timer import MyTimer
 
 
-def filter_canny(image_before:UMat)->UMat:
+def filter_rotation(image_before:UMat)->UMat:
   t=time.perf_counter()
   height,width,c = image_before.shape
 
@@ -32,4 +32,4 @@ def filter_canny(image_before:UMat)->UMat:
   return image_after
 
 
-run(filter_canny)
+run(filter_rotation)

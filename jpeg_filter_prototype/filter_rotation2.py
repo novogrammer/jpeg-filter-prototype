@@ -3,13 +3,12 @@ from typing import Any
 import cv2
 from cv2 import UMat
 import time
-import os
 
 from runner import run
 import numpy as np
 from my_timer import MyTimer
 
-class FilterCanny2:
+class FilterRotation2:
   def __init__(self) -> None:
     self.image_white = None
     self.image_white_transformed = None
@@ -45,5 +44,5 @@ class FilterCanny2:
       image_after=cv2.bitwise_or(self.image_temp,self.image_before_transformed)
     return image_after
 
-filterCanny2=FilterCanny2()
-run(filterCanny2)
+filterRotation2=FilterRotation2()
+run(filterRotation2)
