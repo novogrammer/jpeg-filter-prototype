@@ -24,6 +24,8 @@ FILTER_JPEG_QUALITY="80"
 
 # sender.pyでファイルから読み込むか？
 FILTER_FROM_FILE="1"
+# sender.pyやfilter.pyでつかうVIDEOのINDEX
+FILTER_VIDEO_INDEX="0"
 # sender.pyの画像幅
 FILTER_IMAGE_WIDTH="480"
 # sender.pyの画像高さ

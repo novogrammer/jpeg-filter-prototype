@@ -12,6 +12,7 @@ load_dotenv()
 MY_IP=os.getenv("FILTER_MY_IP","127.0.0.1")
 MY_PORT=int(os.getenv("FILTER_MY_PORT","5000"))
 FROM_FILE=bool(int(os.getenv("FILTER_FROM_FILE","1")))
+VIDEO_INDEX=int(os.getenv("FILTER_VIDEO_INDEX","0"))
 JPEG_QUALITY=int(os.getenv("FILTER_JPEG_QUALITY","80"))
 IMAGE_WIDTH=int(os.getenv("FILTER_IMAGE_WIDTH","480"))
 IMAGE_HEIGHT=int(os.getenv("FILTER_IMAGE_HEIGHT","270"))
@@ -21,6 +22,7 @@ SPF=1/FPS
 print(f"MY_IP: {MY_IP}")
 print(f"MY_PORT: {MY_PORT}")
 print(f"FROM_FILE: {FROM_FILE}")
+print(f"VIDEO_INDEX: {VIDEO_INDEX}")
 print(f"JPEG_QUALITY: {JPEG_QUALITY}")
 print(f"IMAGE_WIDTH: {IMAGE_WIDTH}")
 print(f"FPS: {FPS}")
@@ -29,7 +31,7 @@ if FROM_FILE:
   with open('sending_image.jpg', 'rb') as f:
     data = f.read()
 else:
-  capture=cv2.VideoCapture(0)
+  capture=cv2.VideoCapture(VIDEO_INDEX)
 
 while True:
   try:

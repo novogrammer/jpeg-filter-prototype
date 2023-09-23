@@ -1,8 +1,13 @@
 
+import os
 import cv2
 from cv2 import UMat
+from dotenv import load_dotenv
 
 from runner import run
+load_dotenv()
+VIDEO_INDEX=int(os.getenv("FILTER_VIDEO_INDEX","0"))
+print(f"VIDEO_INDEX: {VIDEO_INDEX}")
 
 capture=cv2.VideoCapture(0)
 
