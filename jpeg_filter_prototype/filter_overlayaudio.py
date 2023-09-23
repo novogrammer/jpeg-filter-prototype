@@ -5,6 +5,7 @@ from cv2 import UMat
 import numpy as np
 from dotenv import load_dotenv
 import pyaudio
+from my_timer import MyTimer
 
 from runner import run
 load_dotenv()
@@ -46,32 +47,40 @@ def filter_overlayaudio(image_before:UMat)->UMat:
   part_h = height / 100
   # img = np.full((height, width, 3), 0, dtype=np.uint8)
 
-  # フレームサイズ分データを読み込み
-  frame = stream.read(FRAME_SIZE,exception_on_overflow = False)
-  # サンプリング配列に読み込んだデータを追加
-  frame_data = np.frombuffer(frame, dtype="int16") / INT16_MAX
-  sampling_data = np.concatenate([sampling_data, frame_data])
-  if sampling_data.shape[0] > SAMPLING_SIZE:
-      # サンプリング配列サイズよりあふれた部分をカット
-      sampling_data = sampling_data[sampling_data.shape[0] - SAMPLING_SIZE:]
+  with MyTimer("overlayaudio read"):
+    # フレームサイズ分データを読み込み
+    frame = stream.read(FRAME_SIZE,exception_on_overflow = False)
+  with MyTimer("overlayaudio frombuffer"):
+    # サンプリング配列に読み込んだデータを追加
+    frame_data = np.frombuffer(frame, dtype="int16") / INT16_MAX
+  with MyTimer("overlayaudio np.concatenate"):
+    # サンプリング配列に読み込んだデータを追加
+    sampling_data = np.concatenate([sampling_data, frame_data])
+    if sampling_data.shape[0] > SAMPLING_SIZE:
+        # サンプリング配列サイズよりあふれた部分をカット
+        sampling_data = sampling_data[sampling_data.shape[0] - SAMPLING_SIZE:]
 
-  # 高速フーリエ変換（周波数成分に変換）
-  fft = np.abs(np.fft.fft(sampling_data))
+  with MyTimer("overlayaudio np.fft.fft"):
+    # 高速フーリエ変換（周波数成分に変換）
+    fft = np.abs(np.fft.fft(sampling_data))
 
-  # 表示用データ配列作成
-  #   周波数成分の値を周波数を範囲毎に合計して、表示用データ配列(spectram_data)を作成
-  spectram_data = np.dot(spectram_array, fft)
+  with MyTimer("overlayaudio np.dot"):
+    # 表示用データ配列作成
+    #   周波数成分の値を周波数を範囲毎に合計して、表示用データ配列(spectram_data)を作成
+    spectram_data = np.dot(spectram_array, fft)
 
-  image_after = image_before.copy()
+  with MyTimer("overlayaudio image_before.copy"):
+    image_after = image_before.copy()
 
-  # 出力処理
-  # cv2.rectangle(img, (0,0), (width, height), (0,0,0), thickness=-1)   # 出力領域のクリア
-  for index, value in enumerate(spectram_data):
-    # 単色のグラフとして表示
-    cv2.rectangle(image_after,
-                  (int(part_w * (index + 0) + 1), int(height)),
-                  (int(part_w * (index + 1) - 1), int(max(height - value/4, 0))),
-                  (255, 0, 0), thickness=-1)
+  with MyTimer("overlayaudio cv2.rectangle"):
+    # 出力処理
+    # cv2.rectangle(img, (0,0), (width, height), (0,0,0), thickness=-1)   # 出力領域のクリア
+    for index, value in enumerate(spectram_data):
+      # 単色のグラフとして表示
+      cv2.rectangle(image_after,
+                    (int(part_w * (index + 0) + 1), int(height)),
+                    (int(part_w * (index + 1) - 1), int(max(height - value/4, 0))),
+                    (255, 0, 0), thickness=-1)
   return image_after
 
 run(filter_overlayaudio)
