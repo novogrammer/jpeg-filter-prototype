@@ -34,12 +34,16 @@ audio = pyaudio.PyAudio()
 # サンプリング配列(sampling_data)の初期化
 sampling_data = np.zeros(SAMPLING_SIZE)
 
-frame_data_queue:Queue[np.ndarray[np.float64]] = Queue()
+frame_data_queue:Queue[np.ndarray[np.float64]] = Queue(10)
 
 # 別スレッドで呼ばれる
 def stream_callback(in_data:bytes | None, frame_count:int, time_info:any, status:int):
   with MyTimer("overlayaudio frombuffer"):
     frame_data = np.frombuffer(in_data, dtype="int16") / INT16_MAX
+  if frame_data_queue.full():
+    # 古いものから捨てる
+    print("drop frame_data")
+    frame_data_queue.get()
   frame_data_queue.put(frame_data)
   # print(in_data)
   return (in_data, pyaudio.paContinue)
