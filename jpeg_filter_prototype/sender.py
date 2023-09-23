@@ -11,11 +11,11 @@ load_dotenv()
 
 MY_IP=os.getenv("FILTER_MY_IP","127.0.0.1")
 MY_PORT=int(os.getenv("FILTER_MY_PORT","5000"))
-FROM_FILE=bool(int(os.getenv("SENDER_FROM_FILE","1")))
+FROM_FILE=bool(int(os.getenv("FILTER_FROM_FILE","1")))
 JPEG_QUALITY=int(os.getenv("FILTER_JPEG_QUALITY","80"))
-IMAGE_WIDTH=int(os.getenv("SENDER_IMAGE_WIDTH","480"))
-IMAGE_HEIGHT=int(os.getenv("SENDER_IMAGE_HEIGHT","270"))
-FPS=int(os.getenv("SENDER_FPS","30"))
+IMAGE_WIDTH=int(os.getenv("FILTER_IMAGE_WIDTH","480"))
+IMAGE_HEIGHT=int(os.getenv("FILTER_IMAGE_HEIGHT","270"))
+FPS=int(os.getenv("FILTER_FPS","30"))
 SPF=1/FPS
 
 print(f"MY_IP: {MY_IP}")
