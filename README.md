@@ -1,10 +1,27 @@
 # JPEGフィルターのプロトタイプ
 単純にJPEGを受け取り、フィルターをかけ、JPEGを送信する。
 
+## PyAudioの準備
+PyAudioの準備
+
+### Macの場合
+
+```bash
+brew install portaudio
+```
+
+### Ubuntuの場合
+
+```bash
+sudo apt-get install python3-pyaudio
+```
+
 ## 環境構築
+
+
 poetryをインストールしておく
 
-```
+```bash
 poetry install
 ```
 
@@ -42,15 +59,15 @@ FILTER_TO_FILE="1"
 
 最後から順番に実行する。
 
-```
+```bash
 poetry run python ./jpeg_filter_prototype/receiver.py
 ```
 
 cannyの場合
-```
+```bash
 poetry run python ./jpeg_filter_prototype/filter_canny.py
 ```
 
-```
+```bash
 poetry run python ./jpeg_filter_prototype/sender.py
 ```
