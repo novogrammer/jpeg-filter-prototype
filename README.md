@@ -13,7 +13,7 @@ brew install portaudio
 ### Ubuntuの場合
 
 ```bash
-sudo apt-get install python3-pyaudio
+sudo apt-get install portaudio19-dev
 ```
 
 ## 環境構築
