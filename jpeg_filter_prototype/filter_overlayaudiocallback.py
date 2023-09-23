@@ -6,6 +6,7 @@ import numpy as np
 from dotenv import load_dotenv
 import pyaudio
 from my_timer import MyTimer
+from queue import Empty,Full, Queue
 
 from runner import run
 load_dotenv()
@@ -33,16 +34,13 @@ audio = pyaudio.PyAudio()
 # サンプリング配列(sampling_data)の初期化
 sampling_data = np.zeros(SAMPLING_SIZE)
 
+frame_data_queue:Queue[np.ndarray[np.float64]] = Queue()
+
+# 別スレッドで呼ばれる
 def stream_callback(in_data:bytes | None, frame_count:int, time_info:any, status:int):
-  global sampling_data
   with MyTimer("overlayaudio frombuffer"):
     frame_data = np.frombuffer(in_data, dtype="int16") / INT16_MAX
-  with MyTimer("overlayaudio np.concatenate"):
-    # サンプリング配列に読み込んだデータを追加
-    sampling_data = np.concatenate([sampling_data, frame_data])
-    if sampling_data.shape[0] > SAMPLING_SIZE:
-        # サンプリング配列サイズよりあふれた部分をカット
-        sampling_data = sampling_data[sampling_data.shape[0] - SAMPLING_SIZE:]
+  frame_data_queue.put(frame_data)
   # print(in_data)
   return (in_data, pyaudio.paContinue)
   
@@ -53,6 +51,17 @@ stream = audio.open(format = pyaudio.paInt16,rate = SAMPLE_RATE,channels = 1,
 
 
 def filter_overlayaudio(image_before:UMat)->UMat:
+  global sampling_data
+
+  with MyTimer("overlayaudio np.concatenate"):
+    while not frame_data_queue.empty():
+      frame_data = frame_data_queue.get()
+      # サンプリング配列に読み込んだデータを追加
+      sampling_data = np.concatenate([sampling_data, frame_data])
+    if sampling_data.shape[0] > SAMPLING_SIZE:
+        # サンプリング配列サイズよりあふれた部分をカット
+        sampling_data = sampling_data[sampling_data.shape[0] - SAMPLING_SIZE:]
+
   height,width,c = image_before.shape
 
   # 表示用の変数定義・初期化
