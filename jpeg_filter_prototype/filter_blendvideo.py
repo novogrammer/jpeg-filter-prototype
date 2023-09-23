@@ -9,7 +9,7 @@ load_dotenv()
 VIDEO_INDEX=int(os.getenv("FILTER_VIDEO_INDEX","0"))
 print(f"VIDEO_INDEX: {VIDEO_INDEX}")
 
-capture=cv2.VideoCapture(0)
+capture=cv2.VideoCapture(VIDEO_INDEX)
 
 def filter_blendvideo(image_before:UMat)->UMat:
   if not capture.isOpened():
