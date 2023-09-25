@@ -96,4 +96,9 @@ def filter_overlayaudio(image_before:UMat)->UMat:
                     (255, 0, 0), thickness=-1)
   return image_after
 
-run(filter_overlayaudio)
+try:
+  run(filter_overlayaudio)
+finally:
+  stream.stop_stream()
+  stream.close()
+  audio.terminate()
