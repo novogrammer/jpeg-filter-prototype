@@ -45,6 +45,8 @@ FILTER_FROM_FILE="1"
 FILTER_VIDEO_INDEX="0"
 # filter.pyでつかうAUDIOのINDEX
 FILTER_AUDIO_INDEX="0"
+# filter.pyでつかうARDUINO_HCSR04
+FILTER_ARDUINO_HCSR04_INDEX="/dev/cu.usbmodem2101"
 # sender.pyの画像幅
 FILTER_IMAGE_WIDTH="480"
 # sender.pyの画像高さ
